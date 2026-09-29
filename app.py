@@ -115,7 +115,7 @@ def parse_bool(value: str):
     return None
 
 
-def fetch_all_listings(access_token: str):
+def fetch_all_listings(access_token: str, state: str | None = None):
     all_results = []
     page = 1
     while True:
@@ -123,6 +123,10 @@ def fetch_all_listings(access_token: str):
             "limit": 100,
             "offset": (page - 1) * 100,
         }
+
+        if state:
+            params["state"] = state
+
         url = f"https://api.etsy.com/v3/application/shops/{SHOP_ID}/listings?{urlencode(params)}"
         r = requests.get(
             url,
