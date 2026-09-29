@@ -438,7 +438,7 @@ def bulk_update():
         url = f"https://api.etsy.com/v3/application/listings/{listing_id}"
         headers = {
             "Authorization": f"Bearer {access_token}",
-            "x-api-key": CLIENT_ID,
+            "x-api-key": f"{KEYSTRING}:{SHARED_SECRET}",
             "Content-Type": "application/json",
         }
 
