@@ -10,11 +10,12 @@ from flask import Flask, redirect, request, session
 app = Flask(__name__)
 
 # --- CONFIG ---
-CLIENT_ID = os.getenv("ETSY_CLIENT_ID")
-CLIENT_SECRET = os.getenv("ETSY_CLIENT_SECRET")
+KEYSTRING = os.getenv("ETSY_KEYSTRING")
+SHARED_SECRET = os.getenv("ETSY_SHARED_SECRET")
 CALLBACK_URL = os.getenv("ETSY_CALLBACK_URL", "https://apmagic.artplusmusic.store/callback")
 SHOP_ID = os.getenv("ETSY_SHOP_ID", "66416115")
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "change-this-in-render")
+
 
 STATE_OPTIONS = [
     "draft",
