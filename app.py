@@ -195,7 +195,6 @@ def callback():
     if not saved_state or state != saved_state:
         return "Invalid state"
 
-    # Etsy requires x-www-form-urlencoded + x-api-key
     token_response = requests.post(
         "https://api.etsy.com/v3/public/oauth/token",
         data={
@@ -306,7 +305,7 @@ def listings():
     )
     html.append(
         f"<p style='margin-top:0; font-size:14px;'>"
-        f"<strong>Mass Action Command (Targeting {len(filtered)} items in view):</strong></p>"
+        f"<strong>+ Mass Action Command (Targeting {len(filtered)} items in view):</strong></p>"
     )
 
     html.append(
