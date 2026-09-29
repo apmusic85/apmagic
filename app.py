@@ -3,10 +3,13 @@ import os
 import secrets
 import hashlib
 import base64
+import requests
 
 app = Flask(__name__)
 
 CLIENT_ID = os.getenv("ETSY_CLIENT_ID")
+CLIENT_SECRET = os.getenv("ETSY_CLIENT_SECRET")
+
 CALLBACK_URL = "https://apmagic.artplusmusic.store/callback"
 
 @app.route("/")
@@ -22,14 +25,14 @@ def login():
 
     verifier = secrets.token_urlsafe(64)
 
+    with open("/tmp/verifier.txt", "w") as f:
+        f.write(verifier)
+
     challenge = base64.urlsafe_b64encode(
         hashlib.sha256(verifier.encode()).digest()
     ).decode().rstrip("=")
 
     state = secrets.token_urlsafe(32)
-
-    with open("/tmp/verifier.txt", "w") as f:
-        f.write(verifier)
 
     url = (
         "https://www.etsy.com/oauth/connect"
@@ -49,10 +52,23 @@ def callback():
 
     code = request.args.get("code")
 
+    with open("/tmp/verifier.txt", "r") as f:
+        verifier = f.read()
+
+    token_response = requests.post(
+        "https://api.etsy.com/v3/public/oauth/token",
+        json={
+            "grant_type": "authorization_code",
+            "client_id": CLIENT_ID,
+            "redirect_uri": CALLBACK_URL,
+            "code": code,
+            "code_verifier": verifier
+        }
+    )
+
     return f"""
-    <h1>Etsy Authorization Complete</h1>
-    <p>Authorization Code:</p>
-    <pre>{code}</pre>
+    <h1>Token Response</h1>
+    <pre>{token_response.text}</pre>
     """
 
 if __name__ == "__main__":
