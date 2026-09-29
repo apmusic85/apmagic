@@ -4,7 +4,6 @@ import hashlib
 import base64
 import json
 from urllib.parse import urlencode
-
 import requests
 from flask import Flask, redirect, request, session
 
@@ -15,7 +14,6 @@ CLIENT_ID = os.getenv("ETSY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("ETSY_CLIENT_SECRET")
 CALLBACK_URL = os.getenv("ETSY_CALLBACK_URL", "https://apmagic.artplusmusic.store/callback")
 SHOP_ID = os.getenv("ETSY_SHOP_ID", "66416115")
-
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "change-this-in-render")
 
 STATE_OPTIONS = [
@@ -87,7 +85,6 @@ ORDERED_COLUMNS = [
     "should_auto_renew",
 ]
 
-
 # --- HELPERS ---
 def assign_group(listing: dict) -> str:
     blob = (
@@ -95,7 +92,7 @@ def assign_group(listing: dict) -> str:
         + " "
         + (listing.get("description") or "")
         + " "
-        + " ".join(listing.get("tags", []) or [])
+        + "".join(listing.get("tags", []) or [])
         + " "
         + " ".join(listing.get("skus", []) or [])
     )
@@ -150,9 +147,14 @@ def fetch_all_listings(access_token: str, state: str | None = None):
 @app.route("/")
 def home():
     return """
-    <h1>APMagic Etsy Bulk Inventory Manager</h1>
-    <p><a href="/login">Login with Etsy</a></p>
-    <p><a href="/listings">Go to Matrix</a></p>
+    <html>
+    <head><title>APMagic Etsy Bulk Inventory Manager</title></head>
+    <body>
+        <h1>APMagic Etsy Bulk Inventory Manager</h1>
+        <p><a href="/login">Login with Etsy</a></p>
+        <p><a href="/listings">Go to Matrix</a></p>
+    </body>
+    </html>
     """
 
 
@@ -167,7 +169,6 @@ def login():
 
     state = secrets.token_urlsafe(32)
     session["oauth_state"] = state
-
     url = (
         "https://www.etsy.com/oauth/connect"
         "?response_type=code"
@@ -194,14 +195,19 @@ def callback():
     if not saved_state or state != saved_state:
         return "Invalid state"
 
+    # Etsy requires x-www-form-urlencoded + x-api-key
     token_response = requests.post(
         "https://api.etsy.com/v3/public/oauth/token",
-        json={
+        data={
             "grant_type": "authorization_code",
             "client_id": CLIENT_ID,
             "redirect_uri": CALLBACK_URL,
             "code": code,
             "code_verifier": verifier,
+        },
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "x-api-key": CLIENT_ID,
         },
     )
 
@@ -212,7 +218,6 @@ def callback():
 
     access_token = token_data["access_token"]
     session["access_token"] = access_token
-
     return redirect("/listings")
 
 
@@ -261,36 +266,37 @@ def listings():
 
     # STATE FILTER BUTTON GRID
     html.append("<div style='margin-bottom:15px;'>")
-    html.append("<label><strong>Listing State Filter:</strong></label>&nbsp;")
+    html.append("<label><strong>Listing State Filter :</strong></label>&nbsp;")
     for s in STATE_OPTIONS:
         active_cls = (
             "background-color:#007bff;color:white;padding:6px 12px;margin-right:6px;"
             "border:none;border-radius:4px;cursor:pointer;"
             if s == working_state
             else "background-color:#e0e0e0;color:black;padding:6px 12px;margin-right:6px;"
-                 "border:none;border-radius:4px;cursor:pointer;"
+            "border:none;border-radius:4px;cursor:pointer;"
         )
         html.append(
-            f"<button style='{active_cls}' "
-            f"onclick=\"location.href='/listings?state={s}&group={active_group}'\">{s.upper()}</button>"
+            f"<button style='{active_cls}'"
+            f" onclick=\"location.href='/listings?state={s}&group={active_group}'\">{s.upper()}</button>"
         )
     html.append("</div>")
 
     # GROUP CATEGORY BUTTON GRID
     html.append("<div style='margin-bottom:20px;'>")
-    html.append("<label><strong>Product Group Filter:</strong></label>&nbsp;")
+    html.append("<label><strong>Product Group Filter :</strong></label>&nbsp;")
     for g in GROUPS:
         active_cls = (
             "background-color:#007bff;color:white;padding:6px 12px;margin-right:6px;"
             "border:none;border-radius:4px;cursor:pointer;"
             if g == active_group
             else "background-color:#e0e0e0;color:black;padding:6px 12px;margin-right:6px;"
-                 "border:none;border-radius:4px;cursor:pointer;"
+            "border:none;border-radius:4px;cursor:pointer;"
         )
         html.append(
-            f"<button style='{active_cls}' "
-            f"onclick=\"location.href='/listings?state={working_state}&group={g}'\">{g}</button>"
+            f"<button style='{active_cls}'"
+            f" onclick=\"location.href='/listings?state={working_state}&group={g}'\">{g}</button>"
         )
+
     html.append("</div>")
 
     # MASS ACTION PANEL
@@ -300,14 +306,13 @@ def listings():
     )
     html.append(
         f"<p style='margin-top:0; font-size:14px;'>"
-        f"<strong>⚡ Mass Action Command (Targeting {len(filtered)} items in view):</strong></p>"
+        f"<strong>Mass Action Command (Targeting {len(filtered)} items in view):</strong></p>"
     )
 
     html.append(
         "<form method='POST' action='/bulk_update' "
         "style='display:flex; align-items:center; gap:10px;'>"
     )
-
     html.append(f"<input type='hidden' name='state' value='{working_state}'/>")
     html.append(f"<input type='hidden' name='group' value='{active_group}'/>")
 
@@ -319,7 +324,7 @@ def listings():
 
     html.append(
         "<input type='text' name='insert_value' "
-        "placeholder='Blank Insertion Box (Enter changes here)...' "
+        "placeholder='Blank Insertion Box (Enter changes here) ... '"
         "style='width:400px; padding:4px;' required />"
     )
 
@@ -328,14 +333,12 @@ def listings():
         "style='padding:6px 12px; background:#007bff; color:white; "
         "border:none; border-radius:4px; cursor:pointer;'/>"
     )
-
     html.append("</form>")
     html.append("</div>")
 
     # DENSE DATA LAYOUT GRID
     html.append(f"<p>Showing Rows 1 - {len(filtered)}</p>")
     html.append("<div style='overflow-x:auto; max-height:600px; border:1px solid #ccc;'>")
-
     html.append("<table><thead><tr>")
     html.append("<th>Row #</th>")
     for col in ORDERED_COLUMNS:
@@ -347,7 +350,6 @@ def listings():
         html.append(f"<tr><td><strong>{index}</strong></td>")
         for col in ORDERED_COLUMNS:
             if col == "sku":
-                # our matrix uses a single sku column; Etsy uses skus list
                 skus = listing.get("skus")
                 if isinstance(skus, list) and skus:
                     val = skus[0]
@@ -355,20 +357,17 @@ def listings():
                     val = ""
             else:
                 val = listing.get(col, "")
-
             if col == "price":
                 if isinstance(val, dict):
                     amount = float(val.get("amount", 0))
                     divisor = float(val.get("divisor", 1) or 1)
                     val = f"${amount / divisor:.2f}"
-            elif isinstance(val, (list, dict)):
-                val = json.dumps(val)
-
+                elif isinstance(val, (list, dict)):
+                    val = json.dumps(val)
             html.append(f"<td title='{val}'>{val}</td>")
         html.append("</tr>")
 
     html.append("</tbody></table></div>")
-
     html.append("</body></html>")
     return "\n".join(html)
 
@@ -383,7 +382,6 @@ def bulk_update():
     active_group = request.form.get("group", "All")
     edit_target = request.form.get("edit_target")
     insert_value = request.form.get("insert_value", "").strip()
-
     if not edit_target or insert_value == "":
         return redirect(f"/listings?state={working_state}&group={active_group}")
 
