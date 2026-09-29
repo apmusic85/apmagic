@@ -11,7 +11,6 @@ CLIENT_ID = os.getenv("ETSY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("ETSY_CLIENT_SECRET")
 
 CALLBACK_URL = "https://apmagic.artplusmusic.store/callback"
-
 SHOP_ID = "66416115"
 
 @app.route("/")
@@ -19,7 +18,8 @@ def home():
     return """
     <h1>APMagic</h1>
     <p>Art Plus Music Etsy Manager</p>
-    <a href="/login">Login with Etsy"
+    /loginLogin with Etsy</a>
+    """
 
 @app.route("/login")
 def login():
@@ -69,7 +69,20 @@ def callback():
 
     token_data = token_response.json()
 
+    access_token = token_data["access_token"]
+
+    listings_response = requests.get(
+        f"https://openapi.etsy.com/v3/application/shops/{SHOP_ID}/listings",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "x-api-key": f"{CLIENT_ID}:{CLIENT_SECRET}"
+        }
+    )
+
     return f"""
-    <h1>Token Data</h1>
-    <pre>{token_data}</pre>
+    <h1>Listings</h1>
+    <pre>{listings_response.text}</pre>
     """
+
+if __name__ == "__main__":
+    app.run()
