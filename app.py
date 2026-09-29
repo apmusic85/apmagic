@@ -39,7 +39,7 @@ def login():
         "?response_type=code"
         f"&client_id={CLIENT_ID}"
         f"&redirect_uri={CALLBACK_URL}"
-        "&scope=listings_r%20shops_r"
+        "&scope=listings_r%20listings_w%20shops_r"
         f"&state={state}"
         f"&code_challenge={challenge}"
         "&code_challenge_method=S256"
