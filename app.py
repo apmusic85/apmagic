@@ -79,7 +79,7 @@ def callback():
     access_token = token_data["access_token"]
 
     listings_response = requests.get(
-        f"https://openapi.etsy.com/v3/application/shops/{SHOP_ID}/listings",
+        f"https://openapi.etsy.com/v3/application/shops/{SHOP_ID}/listings?state=all",
         headers={
             "Authorization": f"Bearer {access_token}",
             "x-api-key": f"{CLIENT_ID}:{CLIENT_SECRET}",
