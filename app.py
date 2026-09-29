@@ -230,7 +230,7 @@ def listings():
     if active_group not in GROUPS:
         active_group = "All"
 
-    all_results = fetch_all_listings(access_token)
+    all_results = fetch_all_listings(access_token, working_state)
 
     enriched = []
     for l in all_results:
@@ -387,7 +387,7 @@ def bulk_update():
     if not edit_target or insert_value == "":
         return redirect(f"/listings?state={working_state}&group={active_group}")
 
-    all_results = fetch_all_listings(access_token)
+    all_results = fetch_all_listings(access_token, working_state)
 
     targets = []
     for l in all_results:
