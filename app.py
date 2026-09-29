@@ -96,9 +96,44 @@ def callback():
         else:
             all_results.append({"state": s, "error": data})
 
+    KEYWORD_GROUPS = {
+        "Tees/T-shirts": ["Tees/T-shirts"],
+        "Hats": ["Hats"],
+        "shoes - men": ["shoes - men"],
+        "Framed Art Prints": ["Framed Art Prints"],
+        "Backpack(s)": ["Backpack(s)"],
+        "Custom": ["Custom"],
+        "shoes - women": ["shoes - women"],
+        "Fanny": ["Fanny"],
+    }
+
+    grouped = {k: [] for k in KEYWORD_GROUPS}
+    grouped["all"] = all_results
+
+    for l in all_results:
+        blob = (
+            (l.get("title", "") or "") + " " +
+            (l.get("description", "") or "") + " " +
+            " ".join(l.get("tags", []) or []) + " " +
+            " ".join(l.get("skus", []) or [])
+        )
+
+        matched = False
+        for group_name, keywords in KEYWORD_GROUPS.items():
+            for kw in keywords:
+                if kw in blob:
+                    grouped[group_name].append(l)
+                    matched = True
+                    break
+            if matched:
+                break
+
+        if not matched:
+            grouped.setdefault("other", []).append(l)
+
     return f"""
     <h1>Listings</h1>
-    <pre>{json.dumps(all_results, indent=2)}</pre>
+    <pre>{json.dumps(grouped, indent=2)}</pre>
     """
 
 
