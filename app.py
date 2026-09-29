@@ -66,9 +66,21 @@ def callback():
         }
     )
 
+    token_data = token_response.json()
+
+    access_token = token_data["access_token"]
+
+    user_response = requests.get(
+        "https://openapi.etsy.com/v3/application/users/me",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "x-api-key": CLIENT_ID
+        }
+    )
+
     return f"""
-    <h1>Token Response</h1>
-    <pre>{token_response.text}</pre>
+    <h1>User Info</h1>
+    <pre>{user_response.text}</pre>
     """
 
 if __name__ == "__main__":
