@@ -74,7 +74,7 @@ def callback():
         "https://openapi.etsy.com/v3/application/users/me",
         headers={
             "Authorization": f"Bearer {access_token}",
-            "x-api-key": CLIENT_ID
+            "x-api-key": f"{CLIENT_ID}:{CLIENT_SECRET}"
         }
     )
 
