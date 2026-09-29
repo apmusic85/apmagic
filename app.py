@@ -130,7 +130,7 @@ def fetch_all_listings(access_token: str, state: str | None = None):
             url,
             headers={
                 "Authorization": f"Bearer {access_token}",
-                "x-api-key": CLIENT_ID,
+                "x-api-key": f"{KEYSTRING}:{SHARED_SECRET}",
             },
         )
         data = r.json()
@@ -207,7 +207,7 @@ def callback():
         },
         headers={
             "Content-Type": "application/x-www-form-urlencoded",
-            "x-api-key": CLIENT_ID,
+            "x-api-key": f"{KEYSTRING}:{SHARED_SECRET}",
         },
     )
 
