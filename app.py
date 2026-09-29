@@ -4,6 +4,7 @@ import secrets
 import hashlib
 import base64
 import requests
+import json
 
 app = Flask(__name__)
 
@@ -25,11 +26,11 @@ def home():
     <h1>APMagic</h1>
     <a href="/login">Login with Etsy</a>
     """
+
+
 @app.route("/login")
 def login():
-
     verifier = secrets.token_urlsafe(64)
-
     session["code_verifier"] = verifier
 
     challenge = base64.urlsafe_b64encode(
@@ -61,7 +62,7 @@ def callback():
         return "Missing verifier in session"
 
     token_response = requests.post(
-        "https://openapi.etsy.com/v3/public/oauth/token",
+        "https://api.etsy.com/v3/public/oauth/token",
         json={
             "grant_type": "authorization_code",
             "client_id": CLIENT_ID,
@@ -76,14 +77,14 @@ def callback():
     if "access_token" not in token_data:
         return f"<pre>{token_data}</pre>"
 
-        access_token = token_data["access_token"]
+    access_token = token_data["access_token"]
 
     states = ["active", "inactive", "sold_out", "draft", "removed", "expired", "edit"]
     all_results = []
 
     for s in states:
         r = requests.get(
-            f"https://openapi.etsy.com/v3/application/shops/{SHOP_ID}/listings?state={s}",
+            f"https://api.etsy.com/v3/application/shops/{SHOP_ID}/listings?state={s}",
             headers={
                 "Authorization": f"Bearer {access_token}",
                 "x-api-key": f"{CLIENT_ID}:{CLIENT_SECRET}",
