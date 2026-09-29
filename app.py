@@ -1,37 +1,45 @@
 from flask import Flask, redirect, request
 import os
+import secrets
+import hashlib
+import base64
 
 app = Flask(__name__)
 
 CLIENT_ID = os.getenv("ETSY_CLIENT_ID")
-
-CALLBACK_URL = (
-    "https://apmagic.artplusmusic.store/callback"
-)
+CALLBACK_URL = "https://apmagic.artplusmusic.store/callback"
 
 @app.route("/")
 def home():
-    return f"""
+    return """
     <h1>APMagic</h1>
-
     <p>Art Plus Music Etsy Manager</p>
-
-    /login
-        Login with Etsy
-    </a>
+    <p>/loginLogin with Etsy</a></p>
     """
 
 @app.route("/login")
 def login():
 
-    scopes = "listings_r shops_r"
+    verifier = secrets.token_urlsafe(64)
+
+    challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(verifier.encode()).digest()
+    ).decode().rstrip("=")
+
+    state = secrets.token_urlsafe(32)
+
+    with open("/tmp/verifier.txt", "w") as f:
+        f.write(verifier)
 
     url = (
         "https://www.etsy.com/oauth/connect"
-        f"?response_type=code"
-        f"&redirect_uri={CALLBACK_URL}"
-        f"&scope={scopes}"
+        "?response_type=code"
         f"&client_id={CLIENT_ID}"
+        f"&redirect_uri={CALLBACK_URL}"
+        "&scope=listings_r%20shops_r"
+        f"&state={state}"
+        f"&code_challenge={challenge}"
+        "&code_challenge_method=S256"
     )
 
     return redirect(url)
@@ -43,9 +51,7 @@ def callback():
 
     return f"""
     <h1>Etsy Authorization Complete</h1>
-
-    <p>Authorization code:</p>
-
+    <p>Authorization Code:</p>
     <pre>{code}</pre>
     """
 
