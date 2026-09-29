@@ -23,7 +23,8 @@ SHOP_ID = "66416115"
 def home():
     return """
     <h1>APMagic</h1>
-    <a href="/login">Login with Etsy</a
+    <a href="/loginh Etsy</a>
+    """
 @app.route("/login")
 def login():
 
