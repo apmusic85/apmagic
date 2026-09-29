@@ -76,19 +76,28 @@ def callback():
     if "access_token" not in token_data:
         return f"<pre>{token_data}</pre>"
 
-    access_token = token_data["access_token"]
+        access_token = token_data["access_token"]
 
-    listings_response = requests.get(
-        f"https://openapi.etsy.com/v3/application/shops/{SHOP_ID}/listings?state=all",
-        headers={
-            "Authorization": f"Bearer {access_token}",
-            "x-api-key": f"{CLIENT_ID}:{CLIENT_SECRET}",
-        },
-    )
+    states = ["active", "inactive", "sold_out", "draft", "removed", "expired", "edit"]
+    all_results = []
+
+    for s in states:
+        r = requests.get(
+            f"https://openapi.etsy.com/v3/application/shops/{SHOP_ID}/listings?state={s}",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "x-api-key": f"{CLIENT_ID}:{CLIENT_SECRET}",
+            },
+        )
+        data = r.json()
+        if "results" in data:
+            all_results.extend(data["results"])
+        else:
+            all_results.append({"state": s, "error": data})
 
     return f"""
     <h1>Listings</h1>
-    <pre>{listings_response.text}</pre>
+    <pre>{json.dumps(all_results, indent=2)}</pre>
     """
 
 
