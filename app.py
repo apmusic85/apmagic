@@ -1,4 +1,4 @@
-from flask import Flask, redirect, request
+from flask import Flask, redirect, request, session
 import os
 import secrets
 import hashlib
@@ -10,24 +10,26 @@ app = Flask(__name__)
 CLIENT_ID = os.getenv("ETSY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("ETSY_CLIENT_SECRET")
 
+app.secret_key = os.getenv(
+    "FLASK_SECRET_KEY",
+    "change-this-in-render"
+)
+
 CALLBACK_URL = "https://apmagic.artplusmusic.store/callback"
 SHOP_ID = "66416115"
+
 
 @app.route("/")
 def home():
     return """
     <h1>APMagic</h1>
-    <p>Art Plus Music Etsy Manager</p>
-    /loginLogin with Etsy</a>
-    """
-
+    <a href="/login">Login with Etsy</a
 @app.route("/login")
 def login():
 
     verifier = secrets.token_urlsafe(64)
 
-    with open("/tmp/verifier.txt", "w") as f:
-        f.write(verifier)
+    session["code_verifier"] = verifier
 
     challenge = base64.urlsafe_b64encode(
         hashlib.sha256(verifier.encode()).digest()
@@ -48,13 +50,16 @@ def login():
 
     return redirect(url)
 
+
 @app.route("/callback")
 def callback():
 
     code = request.args.get("code")
 
-    with open("/tmp/verifier.txt", "r") as f:
-        verifier = f.read()
+    verifier = session.get("code_verifier")
+
+    if not verifier:
+        return "Missing verifier in session"
 
     token_response = requests.post(
         "https://api.etsy.com/v3/public/oauth/token",
@@ -68,6 +73,9 @@ def callback():
     )
 
     token_data = token_response.json()
+
+    if "access_token" not in token_data:
+        return f"<pre>{token_data}</pre>"
 
     access_token = token_data["access_token"]
 
@@ -83,6 +91,7 @@ def callback():
     <h1>Listings</h1>
     <pre>{listings_response.text}</pre>
     """
+
 
 if __name__ == "__main__":
     app.run()
