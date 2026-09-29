@@ -23,7 +23,7 @@ SHOP_ID = "66416115"
 def home():
     return """
     <h1>APMagic</h1>
-    <a href="/loginh Etsy</a>
+    <a href="/login">Login with Etsy</a>
     """
 @app.route("/login")
 def login():
@@ -54,23 +54,21 @@ def login():
 
 @app.route("/callback")
 def callback():
-
     code = request.args.get("code")
-
     verifier = session.get("code_verifier")
 
     if not verifier:
         return "Missing verifier in session"
 
     token_response = requests.post(
-        "https://api.etsy.com/v3/public/oauth/token",
+        "https://openapi.etsy.com/v3/public/oauth/token",
         json={
             "grant_type": "authorization_code",
             "client_id": CLIENT_ID,
             "redirect_uri": CALLBACK_URL,
             "code": code,
-            "code_verifier": verifier
-        }
+            "code_verifier": verifier,
+        },
     )
 
     token_data = token_response.json()
@@ -84,8 +82,8 @@ def callback():
         f"https://openapi.etsy.com/v3/application/shops/{SHOP_ID}/listings",
         headers={
             "Authorization": f"Bearer {access_token}",
-            "x-api-key": f"{CLIENT_ID}:{CLIENT_SECRET}"
-        }
+            "x-api-key": f"{CLIENT_ID}:{CLIENT_SECRET}",
+        },
     )
 
     return f"""
