@@ -83,7 +83,7 @@ ORDERED_COLUMNS = [
     "listing_type",
     "should_auto_renew",
 ]
- 
+
 def assign_group(listing):
     return str(listing.get("shop_section_id"))
 
