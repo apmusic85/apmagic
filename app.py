@@ -29,7 +29,6 @@ app.secret_key = os.getenv(
     "change-this-in-render"
 )
 
-
 STATE_OPTIONS = [
     "draft",
     "active",
@@ -87,14 +86,6 @@ ORDERED_COLUMNS = [
  
 def assign_group(listing):
     return str(listing.get("shop_section_id"))
- 
-try:
-section_id = int(section_id)
-except (TypeError, ValueError):
-return "other"
- 
-return SECTION_MAP.get(section_id, "other")
-
 
 def parse_bool(value: str):
     v = value.strip().lower()
