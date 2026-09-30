@@ -53,17 +53,6 @@ GROUPS = [
     "other",
 ]
 
-KEYWORD_GROUPS = {
-    "Tees/T-shirts": ["Tees/T-shirts"],
-    "Hats": ["Hats"],
-    "shoes - men": ["shoes - men"],
-    "Framed Art Prints": ["Framed Art Prints"],
-    "Backpack(s)": ["Backpack(s)"],
-    "Custom": ["Custom"],
-    "shoes - women": ["shoes - women"],
-    "Fanny": ["Fanny"],
-}
-
 ORDERED_COLUMNS = [
     "listing_id",
     "state",
@@ -100,21 +89,25 @@ ORDERED_COLUMNS = [
 ]
 
 # --- HELPERS ---
+ 
+SECTION_MAP = {
+60611670: "Custom",
+60611782: "shoes - women",
+60007259: "Tees/T-shirts",
+60007265: "shoes - men",
+60007263: "Hats",
+60007269: "Framed Art Prints",
+}
+ 
 def assign_group(listing: dict) -> str:
-    blob = (
-        (listing.get("title") or "")
-        + " "
-        + (listing.get("description") or "")
-        + " "
-        + "".join(listing.get("tags", []) or [])
-        + " "
-        + " ".join(listing.get("skus", []) or [])
-    )
-    for group_name, keywords in KEYWORD_GROUPS.items():
-        for kw in keywords:
-            if kw and kw in blob:
-                return group_name
-    return "other"
+section_id = listing.get("shop_section_id")
+ 
+try:
+section_id = int(section_id)
+except (TypeError, ValueError):
+return "other"
+ 
+return SECTION_MAP.get(section_id, "other")
 
 
 def parse_bool(value: str):
