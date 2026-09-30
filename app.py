@@ -42,15 +42,12 @@ STATE_OPTIONS = [
 
 GROUPS = [
     "All",
-    "Tees/T-shirts",
-    "Hats",
-    "shoes - men",
-    "Framed Art Prints",
-    "Backpack(s)",
-    "Custom",
-    "shoes - women",
-    "Fanny",
-    "other",
+    "60007259",
+    "60007263",
+    "60007265",
+    "60611782",
+    "60007269",
+    "60611670",
 ]
 
 ORDERED_COLUMNS = [
@@ -99,8 +96,8 @@ SECTION_MAP = {
 60007269: "Framed Art Prints",
 }
  
-def assign_group(listing: dict) -> str:
-section_id = listing.get("shop_section_id")
+def assign_group(listing):
+    return str(listing.get("shop_section_id"))
  
 try:
 section_id = int(section_id)
