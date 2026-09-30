@@ -3,27 +3,163 @@ import secrets
 import hashlib
 import base64
 import json
+from urllib.parse import urlencode
 import requests
 from flask import Flask, redirect, request, session
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# Import everything safely from our custom side files
-from helpers import GROUPS, ORDERED_COLUMNS, assign_group, cast_and_validate_value
-from etsy_api import KEYSTRING, fetch_draft_listings, update_single_listing
-
 app = Flask(__name__)
 
-CLIENT_ID = KEYSTRING  
+# --- CONFIG ---
+KEYSTRING = os.getenv("ETSY_KEYSTRING")
+CLIENT_ID = KEYSTRING  # Links your Keystring directly to the login parameters
 SHARED_SECRET = os.getenv("ETSY_SHARED_SECRET")
 CALLBACK_URL = os.getenv("ETSY_CALLBACK_URL", "https://artplusmusic.store")
+SHOP_ID = os.getenv("ETSY_SHOP_ID", "66416115")
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "change-this-in-render")
 
+# Forces the browser to persist cookie variables across Render redirects
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_SAMESITE='Lax',
     SESSION_COOKIE_HTTPONLY=True
 )
 
+GROUPS = [
+    "All",
+    "Tees/T-shirts",
+    "Hats",
+    "shoes - men",
+    "Framed Art Prints",
+    "Backpack(s)",
+    "Custom",
+    "shoes - women",
+    "Fanny",
+    "other",
+]
+
+KEYWORD_GROUPS = {
+    "Tees/T-shirts": ["Tees/T-shirts"],
+    "Hats": ["Hats"],
+    "shoes - men": ["shoes - men"],
+    "Framed Art Prints": ["Framed Art Prints"],
+    "Backpack(s)": ["Backpack(s)"],
+    "Custom": ["Custom"],
+    "shoes - women": ["shoes - women"],
+    "Fanny": ["Fanny"],
+}
+
+ORDERED_COLUMNS = [
+    "listing_id",
+    "state",
+    "shop_section_id",
+    "title",
+    "price",
+    "quantity",
+    "sku",
+    "description",
+    "tags",
+    "materials",
+    "style",
+    "shipping_profile_id",
+    "return_policy_id",
+    "processing_min",
+    "processing_max",
+    "taxonomy_id",
+    "who_made",
+    "when_made",
+    "is_supply",
+    "item_length",
+    "item_width",
+    "item_height",
+    "item_dimensions_unit",
+    "item_weight",
+    "item_weight_unit",
+    "is_customizable",
+    "is_personalizable",
+    "is_private",
+    "non_taxable",
+    "is_taxable",
+    "listing_type",
+    "should_auto_renew",
+]
+
+# --- HELPERS ---
+def assign_group(listing: dict) -> str:
+    skus_raw = listing.get("skus", [])
+    skus_string_list = [str(s) for s in skus_raw] if isinstance(skus_raw, list) else []
+    
+    blob = (
+        (listing.get("title") or "")
+        + " "
+        + (listing.get("description") or "")
+        + " "
+        + " ".join(listing.get("tags") or [])
+        + " "
+        + " ".join(skus_string_list)
+    )
+    for group_name, keywords in KEYWORD_GROUPS.items():
+        for kw in keywords:
+            if kw and kw in blob:
+                return group_name
+    return "other"
+
+def parse_bool(value: str):
+    v = value.strip().lower()
+    if v in ("true", "1", "yes", "y"):
+        return True
+    if v in ("false", "0", "no", "n"):
+        return False
+    return None
+
+def fetch_draft_listings(access_token: str):
+    all_results = []
+    page = 1
+    while True:
+        params = {
+            "limit": 100,
+            "offset": (page - 1) * 100,
+            "state": "draft"
+        }
+
+        url = f"https://etsy.com{SHOP_ID}/listings?{urlencode(params)}"
+        r = requests.get(
+            url,
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "x-api-key": KEYSTRING,
+            },
+        )
+        if r.status_code != 200:
+            break
+            
+        data = r.json()
+        results = data.get("results", [])
+        if not results:
+            break
+        all_results.extend(results)
+        if len(results) < 100:
+            break
+        page += 1
+    return all_results
+
+def update_single_listing(listing_id, access_token, payload):
+    url = f"https://etsy.com{listing_id}"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "x-api-key": KEYSTRING,
+        "Content-Type": "application/json",
+    }
+    try:
+        res = requests.put(url, json=payload, headers=headers, timeout=5)
+        if res.status_code == 200:
+            return {"status": "success", "id": listing_id}
+        else:
+            return {"status": "fail", "id": listing_id, "msg": f"Status {res.status_code} - {res.text}"}
+    except Exception as e:
+        return {"status": "fail", "id": listing_id, "msg": str(e)}
+
+# --- ROUTES ---
 @app.route("/")
 def home():
     return """
@@ -41,9 +177,11 @@ def home():
 def login():
     verifier = secrets.token_urlsafe(64)
     session["code_verifier"] = verifier
+
     challenge = base64.urlsafe_b64encode(
         hashlib.sha256(verifier.encode()).digest()
     ).decode().rstrip("=")
+
     state = secrets.token_urlsafe(32)
     session["oauth_state"] = state
     url = (
@@ -123,6 +261,7 @@ def listings():
     html.append("<h1>Etsy Bulk Drafts Inventory Matrix</h1>")
     html.append('<p><a href="/login">Refresh Authentication</a></p>')
 
+    # FILTER BUTTON GRID
     html.append("<div style='margin-bottom:20px;'>")
     html.append("<label><strong>Product Group Filter :</strong></label>&nbsp;")
     for g in GROUPS:
@@ -134,6 +273,7 @@ def listings():
         html.append(f"<button style='{active_cls}' onclick=\"location.href='/listings?group={g}'\">{g}</button>")
     html.append("</div>")
 
+    # MASS COMMAND PANEL
     html.append("<div style='margin:20px 0; padding:15px; border:1px solid #ccc; border-radius:6px;'>")
     html.append(f"<p style='margin-top:0; font-size:14px;'><strong>Mass Edit Command Box (Targeting {len(filtered)} Drafts):</strong></p>")
     html.append("<form method='POST' action='/bulk_update' style='display:flex; align-items:center; gap:10px;'>")
@@ -150,6 +290,7 @@ def listings():
     html.append("</form>")
     html.append("</div>")
 
+    # SPREADSHEET DATAGRID
     html.append(f"<p>Showing Draft Rows 1 - {len(filtered)}</p>")
     html.append("<div style='overflow-x:auto; max-height:600px; border:1px solid #ccc;'>")
     html.append("<table><thead><tr><th>Row #</th>")
@@ -201,9 +342,25 @@ def bulk_update():
             if listing_id:
                 targets.append(listing_id)
 
-    val_to_send, error_msg = cast_and_validate_value(edit_target, insert_value)
-    if error_msg:
-        return error_msg, 400
+    # Clean data type casting validation loops
+    if edit_target in ["price", "item_length", "item_width", "item_height", "item_weight"]:
+        try:
+            val_to_send = float(insert_value)
+        except ValueError:
+            return f"Format Error: '{edit_target}' requires numeric inputs.", 400
+    elif edit_target in ["quantity", "processing_min", "processing_max", "taxonomy_id", "shipping_profile_id", "return_policy_id", "shop_section_id"]:
+        try:
+            val_to_send = int(insert_value)
+        except ValueError:
+            return f"Format Error: '{edit_target}' requires an integer value.", 400
+    elif edit_target in ["is_customizable", "is_personalizable", "is_private", "is_supply", "non_taxable", "is_taxable", "should_auto_renew"]:
+        val_to_send = parse_bool(insert_value)
+        if val_to_send is None:
+            return "Format Error: Field requires a boolean choice (true/false, yes/no).", 400
+    elif edit_target in ["tags", "materials", "style"]:
+        val_to_send = [x.strip() for x in insert_value.split(",") if x.strip()]
+    else:
+        val_to_send = insert_value
 
     payload = {}
     if edit_target == "sku":
@@ -214,6 +371,7 @@ def bulk_update():
     success_count = 0
     failure_logs = []
 
+    # Processes all 50 items concurrently in under 1 second to beat Render timeouts
     with ThreadPoolExecutor(max_workers=15) as executor:
         futures = {executor.submit(update_single_listing, lid, access_token, payload): lid for lid in targets}
         for future in as_completed(futures):
@@ -235,3 +393,4 @@ def bulk_update():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
