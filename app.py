@@ -14,16 +14,10 @@ app = Flask(__name__)
 KEYSTRING = os.getenv("ETSY_KEYSTRING")
 CLIENT_ID = KEYSTRING  # Links your Keystring directly to the login parameters
 SHARED_SECRET = os.getenv("ETSY_SHARED_SECRET")
-CALLBACK_URL = os.getenv("ETSY_CALLBACK_URL", "https://artplusmusic.store")
+CALLBACK_URL = os.getenv("ETSY_CALLBACK_URL", "https://apmagic.artplusmusic.store/callback")
 SHOP_ID = os.getenv("ETSY_SHOP_ID", "66416115")
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "change-this-in-render")
 
-# Forces the browser to persist cookie variables across Render redirects
-app.config.update(
-    SESSION_COOKIE_SECURE=True,
-    SESSION_COOKIE_SAMESITE='Lax',
-    SESSION_COOKIE_HTTPONLY=True
-)
 
 GROUPS = [
     "All",
