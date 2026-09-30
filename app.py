@@ -241,6 +241,7 @@ def listings():
         "table{border-collapse:collapse;font-size:11px;}"
         "th,td{border:1px solid #ccc;padding:4px;}"
         "input,select,textarea{font-size:12px;}"
+        "#listing-state-filter{display:none;}"  
         "</style>"
     )
     html.append("</head><body>")
