@@ -248,7 +248,7 @@ def listings():
     html.append('<p><a href="/login">Re-login with Etsy</a></p>')
 
     # STATE FILTER BUTTON GRID
-    html.append("<div style='margin-bottom:15px;'>")
+    html.append("<div id='listing-state-filter' style='margin-bottom:15px;'>")
     html.append("<label><strong>Listing State Filter :</strong></label>&nbsp;")
     for s in STATE_OPTIONS:
         active_cls = (
