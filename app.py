@@ -84,17 +84,6 @@ ORDERED_COLUMNS = [
     "listing_type",
     "should_auto_renew",
 ]
-
-# --- HELPERS ---
-
-SECTION_MAP = {
-60611670: "Custom",
-60611782: "shoes - women",
-60007259: "Tees/T-shirts",
-60007265: "shoes - men",
-60007263: "Hats",
-60007269: "Framed Art Prints",
-}
  
 def assign_group(listing):
     return str(listing.get("shop_section_id"))
