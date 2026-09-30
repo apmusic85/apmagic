@@ -11,10 +11,23 @@ app = Flask(__name__)
 
 # --- CONFIG ---
 KEYSTRING = os.getenv("ETSY_KEYSTRING")
+
+# Etsy OAuth Client ID
+CLIENT_ID = os.getenv("CLIENT_ID", KEYSTRING)
+
 SHARED_SECRET = os.getenv("ETSY_SHARED_SECRET")
-CALLBACK_URL = os.getenv("ETSY_CALLBACK_URL", "https://apmagic.artplusmusic.store/callback")
+
+CALLBACK_URL = os.getenv(
+    "CALLBACK_URL",
+    "https://apmagic.artplusmusic.store/callback"
+)
+
 SHOP_ID = os.getenv("ETSY_SHOP_ID", "66416115")
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "change-this-in-render")
+
+app.secret_key = os.getenv(
+    "FLASK_SECRET_KEY",
+    "change-this-in-render"
+)
 
 
 STATE_OPTIONS = [
