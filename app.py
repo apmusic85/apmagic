@@ -25,6 +25,16 @@ GROUPS = [
     "All", "60007259", "60007263", "60007265", "60611782", "60007269", "60611670",
 ]
 
+GROUP_LABELS = {
+    "All": "All",
+    "60007259": "Tees",
+    "60007263": "Hats",
+    "60007265": "Shoes - men's",
+    "60611782": "Shoes - women's",
+    "60007269": "framed prints",
+    "60611670": "custom",
+}
+
 ORDERED_COLUMNS = [
     "listing_id", "state", "shop_section_id", "title", "price", "quantity",
     "sku", "description", "tags", "materials", "style", "shipping_profile_id",
@@ -235,13 +245,14 @@ def listings():
     display: flex;
     flex-wrap: wrap;
     gap: 18px;
-    align-items: center;
+    align-items: flex-start;
   }
-  .filter-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .filter-group { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; flex-wrap: wrap; }
   .filter-label {
     font-size: 10px; font-weight: 700; text-transform: uppercase;
     letter-spacing: .07em; color: #999; white-space: nowrap;
   }
+  .filter-buttons { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
   .btn {
     padding: 4px 11px;
     border: 1px solid #ccc;
@@ -257,6 +268,36 @@ def listings():
   }
   .btn:hover { background: #ebebeb; }
   .btn.active { background: #111; color: #fff; border-color: #111; }
+
+  .group-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .group-btn {
+    padding: 4px 11px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fafafa;
+    color: #444;
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    line-height: 1.5;
+    transition: background .12s, color .12s;
+  }
+  .group-btn:hover { background: #ebebeb; }
+  .group-btn.active { background: #111; color: #fff; border-color: #111; }
+  .group-label {
+    font-size: 9px;
+    color: #666;
+    text-align: center;
+    white-space: nowrap;
+    max-width: 70px;
+    line-height: 1.2;
+  }
 
   /* ── ACTION PANEL ── */
   .action-panel {
@@ -370,19 +411,21 @@ def listings():
 </div>
 """)
 
-    # TOOLBAR — state + section filters, both sticky
+    # TOOLBAR — keep state in request flow, hide it from UX while leaving section visible
     h.append('<div class="toolbar">')
-    h.append('<div class="filter-group">')
+    h.append('<div class="filter-group" style="display:none;">')
     h.append('<span class="filter-label">State</span>')
     for s in STATE_OPTIONS:
         cls = "btn active" if s == working_state else "btn"
         h.append(f'<a class="{cls}" href="{nav_url(state=s)}">{s}</a>')
     h.append('</div>')
     h.append('<div class="filter-group"><span class="filter-label">Section</span>')
+    h.append('<div class="filter-buttons">')
     for g in GROUPS:
-        cls = "btn active" if g == active_group else "btn"
-        h.append(f'<a class="{cls}" href="{nav_url(group=g)}">{g}</a>')
-    h.append('</div></div>')
+        cls = "group-btn active" if g == active_group else "group-btn"
+        label = GROUP_LABELS.get(g, g)
+        h.append(f'<div class="group-item"><a class="{cls}" href="{nav_url(group=g)}">{g}</a><div class="group-label">{label}</div></div>')
+    h.append('</div></div></div>')
 
     # ACTION PANEL — sticky below toolbar
     h.append(f"""
