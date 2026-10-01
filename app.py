@@ -291,12 +291,13 @@ def listings():
   .group-btn:hover { background: #ebebeb; }
   .group-btn.active { background: #111; color: #fff; border-color: #111; }
   .group-label {
-    font-size: 9px;
+    font-size: 8px;
     color: #666;
     text-align: center;
     white-space: nowrap;
-    max-width: 70px;
-    line-height: 1.2;
+    max-width: 72px;
+    line-height: 1.1;
+    letter-spacing: 0.01em;
   }
 
   /* ── ACTION PANEL ── */
