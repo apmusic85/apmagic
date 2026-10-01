@@ -291,7 +291,7 @@ def listings():
   .group-btn:hover { background: #ebebeb; }
   .group-btn.active { background: #111; color: #fff; border-color: #111; }
   .group-label {
-    font-size: 8px;
+    font-size: 11px;
     color: #666;
     text-align: center;
     white-space: nowrap;
