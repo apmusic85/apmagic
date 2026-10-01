@@ -370,9 +370,9 @@ def listings():
 </div>
 """)
 
-    # TOOLBAR — keep state in request flow, hide it from UX while leaving section visible
+    # TOOLBAR — state + section filters, both sticky
     h.append('<div class="toolbar">')
-    h.append('<div class="filter-group" style="display:none;">')
+    h.append('<div class="filter-group">')
     h.append('<span class="filter-label">State</span>')
     for s in STATE_OPTIONS:
         cls = "btn active" if s == working_state else "btn"
