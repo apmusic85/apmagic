@@ -358,7 +358,7 @@ def listings():
 
   thead th {
     position: sticky;
-    top: 140px;          /* 48 + 46 + 46 stacked bars */
+    top: 94px;          /* table header sits below the sticky action panel */
     z-index: 10;
     background: #1a1a1a;
     color: #fff;
