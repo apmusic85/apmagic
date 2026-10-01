@@ -344,7 +344,14 @@ def listings():
   .count-note { font-size: 11px; color: #aaa; white-space: nowrap; }
 
   /* ── TABLE ── */
-  .table-wrap { overflow-x: auto; padding: 20px; }
+  .table-wrap {
+    position: sticky;
+    top: 94px;
+    z-index: 160;
+    overflow-x: auto;
+    background: #f0f0f0;
+    padding: 20px;
+  }
 
   table {
     border-collapse: collapse;
@@ -358,7 +365,7 @@ def listings():
 
   thead th {
     position: sticky;
-    top: 94px;          /* table header sits below the sticky action panel */
+    top: 0;
     z-index: 10;
     background: #1a1a1a;
     color: #fff;
