@@ -515,7 +515,7 @@ def bulk_update():
     failure_logs  = []
 
     for listing_id in targets:
-        url = f"https://api.etsy.com/v3/application/listings/{listing_id}"
+        url = f"https://api.etsy.com/v3/application/shops/{SHOP_ID}/listings/{listing_id}"
         headers = {
             "Authorization": f"Bearer {access_token}",
             "x-api-key": f"{KEYSTRING}:{SHARED_SECRET}",
