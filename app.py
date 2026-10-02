@@ -531,7 +531,6 @@ def bulk_update():
     all_results = fetch_all_listings(access_token, working_state)
     targets = []
     for l in all_results:
-        if l.get("state", "") == working_state:
             if active_group == "All" or assign_group(l) == active_group:
                 listing_id = l.get("listing_id")
                 if listing_id:
