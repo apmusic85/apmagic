@@ -608,7 +608,7 @@ def bulk_update():
         if not payload:
             continue
 
-        res = requests.put(url, json=payload, headers=headers)
+        res = requests.patch(url, json=payload, headers=headers)
         if res.status_code == 200:
             success_count += 1
         else:
