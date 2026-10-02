@@ -29,9 +29,9 @@ GROUP_LABELS = {
     "All": "All",
     "60007259": "Tees",
     "60007263": "Hats",
-    "60007265": "Shoes - men's",
-    "60611782": "Shoes - women's",
-    "60007269": "framed prints",
+    "60007265": "Shoes-M",
+    "60611782": "Shoes-W",
+    "60007269": "Prints",
     "60611670": "custom",
 }
 
