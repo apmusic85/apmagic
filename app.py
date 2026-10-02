@@ -626,5 +626,14 @@ def bulk_update():
     return redirect(back_url)
 
 
+@app.route("/debug")
+def debug():
+    access_token = session.get("access_token")
+    if not access_token:
+        return redirect("/login")
+    r = requests.get("https://openapi.etsy.com/v3/application/shops?shop_name=artplusmusic", headers={"x-api-key": f"{KEYSTRING}:{SHARED_SECRET}"})
+    return f"<pre>{json.dumps(r.json(), indent=2)}</pre>"
+
+
 if __name__ == "__main__":
     app.run(debug=True)
