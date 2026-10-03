@@ -621,7 +621,7 @@ def bulk_update():
 
         else:
             # --- METADATA PATHWAY: PATCH REQUEST USING FORM DATA ---
-            url = f"https://etsy.com{SHOP_ID}/listings/{listing_id}"
+            url = f"https://api.etsy.com/v3/application/shops/{SHOP_ID}/listings/{listing_id}"
             headers = {
                 "Authorization": f"Bearer {access_token}",
                 "x-api-key": f"{KEYSTRING}:{SHARED_SECRET}",
