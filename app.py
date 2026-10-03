@@ -566,53 +566,108 @@ def bulk_update():
     failure_logs  = []
 
     for listing_id in targets:
-        url = f"https://api.etsy.com/v3/application/shops/{SHOP_ID}/listings/{listing_id}"
-        headers = {
-            "Authorization": f"Bearer {access_token}",
-            "x-api-key": f"{KEYSTRING}:{SHARED_SECRET}",
-            "Content-Type": "application/json",
-        }
-        payload = {}
-        if edit_target == "title":              payload["title"]               = val_to_send
-        elif edit_target == "description":      payload["description"]         = val_to_send
-        elif edit_target == "state":            payload["state"]               = val_to_send
-        elif edit_target == "quantity":         payload["quantity"]            = val_to_send
-        elif edit_target == "shop_section_id":  payload["shop_section_id"]     = val_to_send
-        elif edit_target == "tags":             payload["tags"]                = val_to_send
-        elif edit_target == "materials":        payload["materials"]           = val_to_send
-        elif edit_target == "style":            payload["style"]               = val_to_send
-        elif edit_target == "shipping_profile_id": payload["shipping_profile_id"] = val_to_send
-        elif edit_target == "return_policy_id": payload["return_policy_id"]   = val_to_send
-        elif edit_target == "processing_min":   payload["processing_min"]      = val_to_send
-        elif edit_target == "processing_max":   payload["processing_max"]      = val_to_send
-        elif edit_target == "taxonomy_id":      payload["taxonomy_id"]         = val_to_send
-        elif edit_target == "who_made":         payload["who_made"]            = val_to_send
-        elif edit_target == "when_made":        payload["when_made"]           = val_to_send
-        elif edit_target == "is_supply":        payload["is_supply"]           = val_to_send
-        elif edit_target == "item_length":      payload["item_length"]         = val_to_send
-        elif edit_target == "item_width":       payload["item_width"]          = val_to_send
-        elif edit_target == "item_height":      payload["item_height"]         = val_to_send
-        elif edit_target == "item_dimensions_unit": payload["item_dimensions_unit"] = val_to_send
-        elif edit_target == "item_weight":      payload["item_weight"]         = val_to_send
-        elif edit_target == "item_weight_unit": payload["item_weight_unit"]    = val_to_send
-        elif edit_target == "is_customizable":  payload["is_customizable"]     = val_to_send
-        elif edit_target == "is_personalizable": payload["is_personalizable"]  = val_to_send
-        elif edit_target == "is_private":       payload["is_private"]          = val_to_send
-        elif edit_target == "non_taxable":      payload["non_taxable"]         = val_to_send
-        elif edit_target == "is_taxable":       payload["is_taxable"]          = val_to_send
-        elif edit_target == "listing_type":     payload["listing_type"]        = val_to_send
-        elif edit_target == "should_auto_renew": payload["should_auto_renew"]  = val_to_send
-        elif edit_target == "price":            payload["price"]               = val_to_send
-        elif edit_target == "sku":              payload["skus"]                = [str(val_to_send)]
+        # Check if the targeted edit belongs to the inventory subsystem
+        is_inventory_target = edit_target in ["price", "quantity", "sku"]
 
-        if not payload:
-            continue
+        if is_inventory_target:
+            # --- INVENTORY PATHWAY: PUT REQUEST ---
+            url = f"https://etsy.com{listing_id}/inventory"
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "x-api-key": f"{KEYSTRING}:{SHARED_SECRET}",
+                "Content-Type": "application/json; charset=utf-8"
+            }
+            
+            get_r = requests.get(url, headers={"Authorization": f"Bearer {access_token}", "x-api-key": f"{KEYSTRING}:{SHARED_SECRET}"})
+            if get_r.status_code != 200:
+                failure_logs.append(f"ID {listing_id}: Could not fetch baseline inventory — {get_r.text}")
+                continue
+                
+            g_data = get_r.json()
+            products_list = g_data.get("products", [])
+            
+            if not products_list:
+                failure_logs.append(f"ID {listing_id}: No products structure found to modify.")
+                continue
 
-        res = requests.patch(url, json=payload, headers=headers)
+            # Safely loop through all 18 variations (sizes and colors)
+            for product in products_list:
+                # Force SKU property context to null to satisfy validation constraints
+                product["sku"] = None
+                
+                offerings = product.get("offerings", [])
+                for offering in offerings:
+                    if edit_target == "quantity":
+                        # Applies the chosen stock number identically across all sizes/colors
+                        offering["quantity"] = int(val_to_send)
+                        
+                    elif edit_target == "price":
+                        # Applies a uniform price across all variations using strict currency units
+                        offering["price"] = {
+                            "amount": int(round(float(val_to_send) * 100)),
+                            "divisor": 100,
+                            "currency_code": "USD"
+                        }
+                
+                # Strip out the read-only tracking IDs before pushing updates
+                product.pop("product_id", None)
+                product.pop("scale_name", None)
+                product.pop("is_deleted", None)
+                for offering in product.get("offerings", []):
+                    offering.pop("offering_id", None)
+
+            payload = {"products": products_list}
+            res = requests.put(url, json=payload, headers=headers)
+
+        else:
+            # --- METADATA PATHWAY: PATCH REQUEST USING FORM DATA ---
+            url = f"https://etsy.com{SHOP_ID}/listings/{listing_id}"
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "x-api-key": f"{KEYSTRING}:{SHARED_SECRET}",
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+            
+            payload = {}
+            if edit_target == "title":              payload["title"]               = val_to_send
+            elif edit_target == "description":      payload["description"]         = val_to_send
+            elif edit_target == "state":            payload["state"]               = val_to_send
+            elif edit_target == "shop_section_id":  payload["shop_section_id"]     = val_to_send
+            elif edit_target == "tags":             payload["tags"]                = val_to_send
+            elif edit_target == "materials":        payload["materials"]           = val_to_send
+            elif edit_target == "style":            payload["style"]               = val_to_send
+            elif edit_target == "shipping_profile_id": payload["shipping_profile_id"] = val_to_send
+            elif edit_target == "return_policy_id": payload["return_policy_id"]   = val_to_send
+            elif edit_target == "processing_min":   payload["processing_min"]      = val_to_send
+            elif edit_target == "processing_max":   payload["processing_max"]      = val_to_send
+            elif edit_target == "taxonomy_id":      payload["taxonomy_id"]         = val_to_send
+            elif edit_target == "who_made":         payload["who_made"]            = val_to_send
+            elif edit_target == "when_made":        payload["when_made"]           = val_to_send
+            elif edit_target == "is_supply":        payload["is_supply"]           = val_to_send
+            elif edit_target == "item_length":      payload["item_length"]         = val_to_send
+            elif edit_target == "item_width":       payload["item_width"]          = val_to_send
+            elif edit_target == "item_height":      payload["item_height"]         = val_to_send
+            elif edit_target == "item_dimensions_unit": payload["item_dimensions_unit"] = val_to_send
+            elif edit_target == "item_weight":      payload["item_weight"]         = val_to_send
+            elif edit_target == "item_weight_unit": payload["item_weight_unit"]    = val_to_send
+            elif edit_target == "is_customizable":  payload["is_customizable"]     = val_to_send
+            elif edit_target == "is_personalizable": payload["is_personalizable"]  = val_to_send
+            elif edit_target == "is_private":       payload["is_private"]          = val_to_send
+            elif edit_target == "non_taxable":      payload["non_taxable"]         = val_to_send
+            elif edit_target == "is_taxable":       payload["is_taxable"]          = val_to_send
+            elif edit_target == "listing_type":     payload["listing_type"]        = val_to_send
+            elif edit_target == "should_auto_renew": payload["should_auto_renew"]  = val_to_send
+
+            if not payload:
+                continue
+
+            res = requests.patch(url, data=payload, headers=headers)
+
+        # Track execution logs consistently
         if res.status_code == 200:
             success_count += 1
         else:
-            failure_logs.append(f"ID {listing_id}: {res.status_code} — {res.text}")
+            failure_logs.append(f"ID {listing_id} ({edit_target}): {res.status_code} — {res.text}")
 
     if failure_logs:
         return (
@@ -630,9 +685,10 @@ def debug():
     access_token = session.get("access_token")
     if not access_token:
         return redirect("/login")
-    r = requests.get("https://openapi.etsy.com/v3/application/shops?shop_name=artplusmusic", headers={"x-api-key": f"{KEYSTRING}:{SHARED_SECRET}"})
+    r = requests.get("https://etsy.com", headers={"x-api-key": f"{KEYSTRING}:{SHARED_SECRET}"})
     return f"<pre>{json.dumps(r.json(), indent=2)}</pre>"
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+
