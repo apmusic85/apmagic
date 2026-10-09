@@ -570,6 +570,13 @@ def bulk_update():
     success_count = 0
     failure_logs  = []
 
+    # Build lookup dictionary for fast access to listing details
+    listing_lookup = {
+        l.get("listing_id"): l
+        for l in all_results
+        if l.get("listing_id") is not None
+    }
+
     for listing_id in targets:
         # Check if the targeted edit belongs to the inventory subsystem
         is_inventory_target = edit_target in ["price", "quantity", "sku"]
@@ -636,7 +643,8 @@ def bulk_update():
             payload = {}
             if edit_target == "title":
                 if "<insert title>" in val_to_send:
-                    design_name = [l for l in all_results if l.get("listing_id") == listing_id][0].get("title", "Original Art")
+                    current_listing = listing_lookup.get(listing_id, {})
+                    design_name = current_listing.get("title", "Original Art")
                     payload["title"] = val_to_send.replace("<insert title>", design_name).strip()
                 else:
                     payload["title"] = val_to_send
