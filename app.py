@@ -709,67 +709,6 @@ def debug():
 @app.route('/api/categories', methods=['GET'])
 def get_all_categories():
     """
-    Ditches the broken hardcoded tree. Fetches the real, live, fully 
-    up-to-date category tree layout straight from Etsy's official servers.
-    """
-    url = "https://etsy.com"
-    headers = {
-        "x-api-key": f"{KEYSTRING}"
-    }
-    try:
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            return jsonify(response.json())
-        return jsonify({"error": "Etsy failed to fetch tree", "details": response.text}), response.status_code
-    except Exception as e:
-        return jsonify({"error": "Network connection error to Etsy", "details": str(e)}), 500
-
-
-@app.route('/api/categories/<int:category_id>', methods=['GET'])
-def get_category_by_id(category_id):
-    """
-    Loops through the real live Etsy tree dynamically to pull out the exact 
-    node matching your requested category ID.
-    """
-    url = "https://etsy.com"
-    headers = {
-        "x-api-key": f"{KEYSTRING}"
-    }
-    try:
-        response = requests.get(url, headers=headers)
-        if response.status_code != 200:
-            return jsonify({"error": "Could not load tree from Etsy", "details": response.text}), response.status_code
-        
-        # Pull the list of roots out of the official payload wrapper
-        data = response.json()
-        nodes_list = data.get("results", [])
-
-        # Clean recursive lookup function inside the route context
-        def search_nodes(nodes, target_id):
-            for node in nodes:
-                if node.get("id") == target_id:
-                    return node
-                children = node.get("children", [])
-                if children:
-                    found = search_nodes(children, target_id)
-                    if found:
-                        return found
-            return None
-
-        matched_node = search_nodes(nodes_list, category_id)
-        if matched_node:
-            return jsonify(matched_node)
-        return jsonify({"error": f"Taxonomy ID {category_id} not found in live tree"}), 404
-
-    except Exception as e:
-        return jsonify({"error": "Server execution error", "details": str(e)}), 500
-
-
-# --- ETSY TAXONOMY MANAGEMENT ROUTES ---
-
-@app.route('/api/categories', methods=['GET'])
-def get_all_categories():
-    """
     Fetches the live full hierarchy taxonomy tree directly from Etsy OpenAPI v3.
     """
     url = "https://openapi.etsy.com/v3/application/seller-taxonomy/nodes"
