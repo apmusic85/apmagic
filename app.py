@@ -712,7 +712,7 @@ def get_all_categories():
     Fetches the live full hierarchy taxonomy tree directly from Etsy OpenAPI v3.
     """
     url = "https://openapi.etsy.com/v3/application/seller-taxonomy/nodes"
-    headers = {"x-api-key": f"{KEYSTRING}"}
+    headers = {"x-api-key": f"{KEYSTRING}:{SHARED_SECRET}"
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
@@ -734,7 +734,7 @@ def get_category_properties(category_id):
     url = f"https://openapi.etsy.com/v3/application/seller-taxonomy/nodes/{category_id}/properties"
     headers = {
         "Authorization": f"Bearer {access_token}",
-        "x-api-key": f"{KEYSTRING}"
+        "x-api-key": f"{KEYSTRING}:{SHARED_SECRET}"
     }
     try:
         response = requests.get(url, headers=headers)
