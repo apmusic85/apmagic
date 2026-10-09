@@ -472,6 +472,43 @@ def listings():
 </script>
 """)
 
+h.append("""
+<!-- Live Master Taxonomy Lookup Engine -->
+<div style="margin: 0 20px 15px 20px; padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 6px; display: flex; gap: 10px; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">
+    <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: #888; white-space: nowrap;">Etsy Master Lookup:</span>
+    <input type="text" id="master-search-box" placeholder="Type category name (e.g. Tees, Prints, Hats)..." style="padding: 6px 10px; width: 280px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; color: #000;">
+    <button type="button" onclick="queryEtsyMasterList()" style="padding: 6px 14px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; white-space: nowrap;">Find True IDs</button>
+    <div id="master-search-results" style="font-size: 12px; color: #333; font-weight: 500; margin-left: 10px;"></div>
+</div>
+
+<script>
+function queryEtsyMasterList() {
+    var term = document.getElementById('master-search-box').value.trim().toLowerCase();
+    var resultsBox = document.getElementById('master-search-results');
+    if (!term) return;
+    
+    resultsBox.innerHTML = "Querying live tree...";
+    
+    fetch('/api/categories')
+        .then(function(res) { return res.json(); })
+        .then(function(payload) {
+            var found = [];
+            function traverse(nodes) {
+                nodes.forEach(function(n) {
+                    if (n.name && n.name.toLowerCase().includes(term)) {
+                        found.push("<strong>" + n.name + "</strong>: <span style='color:#b32424; font-family:monospace; font-weight:bold;'> " + n.id + "</span>");
+                    }
+                    if (n.children) traverse(n.children);
+                });
+            }
+            traverse(payload.results || []);
+            resultsBox.innerHTML = found.length > 0 ? found.slice(0, 4).join(" | ") : "No matching categories found.";
+        })
+        .catch(function() { resultsBox.innerHTML = "Lookup handshake failed."; });
+}
+</script>
+""")
+
     # TABLE
     h.append('<div class="table-wrap">')
     h.append('<table><thead><tr>')
