@@ -6,7 +6,6 @@ import json
 from urllib.parse import urlencode
 import requests
 from flask import Flask, redirect, request, session, jsonify
-from taxonomy_id_list_me import ETSY_TAXONOMY_TREE
 
 app = Flask(__name__)
 
@@ -707,27 +706,88 @@ def debug():
 
 # --- ETSY TAXONOMY MANAGEMENT ROUTES ---
 
-def find_node_by_id(nodes, target_id):
-    for node in nodes:
-        if node.get("id") == target_id:
-            return node
-        children = node.get("children", [])
-        if children:
-            found = find_node_by_id(children, target_id)
-            if found:
-                return found
-    return None
-
 @app.route('/api/categories', methods=['GET'])
 def get_all_categories():
-    return jsonify(ETSY_TAXONOMY_TREE)
+    """
+    Ditches the broken hardcoded tree. Fetches the real, live, fully 
+    up-to-date category tree layout straight from Etsy's official servers.
+    """
+    url = "https://etsy.com"
+    headers = {
+        "x-api-key": f"{KEYSTRING}"
+    }
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return jsonify(response.json())
+        return jsonify({"error": "Etsy failed to fetch tree", "details": response.text}), response.status_code
+    except Exception as e:
+        return jsonify({"error": "Network connection error to Etsy", "details": str(e)}), 500
+
 
 @app.route('/api/categories/<int:category_id>', methods=['GET'])
 def get_category_by_id(category_id):
-    node = find_node_by_id(ETSY_TAXONOMY_TREE, category_id)
-    if node:
-        return jsonify(node)
-    return jsonify({"error": f"Taxonomy ID {category_id} not found"}), 404
+    """
+    Loops through the real live Etsy tree dynamically to pull out the exact 
+    node matching your requested category ID.
+    """
+    url = "https://etsy.com"
+    headers = {
+        "x-api-key": f"{KEYSTRING}"
+    }
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            return jsonify({"error": "Could not load tree from Etsy", "details": response.text}), response.status_code
+        
+        # Pull the list of roots out of the official payload wrapper
+        data = response.json()
+        nodes_list = data.get("results", [])
+
+        # Clean recursive lookup function inside the route context
+        def search_nodes(nodes, target_id):
+            for node in nodes:
+                if node.get("id") == target_id:
+                    return node
+                children = node.get("children", [])
+                if children:
+                    found = search_nodes(children, target_id)
+                    if found:
+                        return found
+            return None
+
+        matched_node = search_nodes(nodes_list, category_id)
+        if matched_node:
+            return jsonify(matched_node)
+        return jsonify({"error": f"Taxonomy ID {category_id} not found in live tree"}), 404
+
+    except Exception as e:
+        return jsonify({"error": "Server execution error", "details": str(e)}), 500
+
+
+@app.route('/api/categories/<int:category_id>/properties', methods=['GET'])
+def get_category_properties(category_id):
+    """
+    Hits the official live v3 endpoint to grab required listing attributes, 
+    variation matrices, and valid size/scale configs for this specific node ID.
+    """
+    access_token = session.get("access_token")
+    if not access_token:
+        return jsonify({"error": "Authentication required. Please log in first."}), 401
+
+    url = f"https://etsy.com/{category_id}/properties"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "x-api-key": f"{KEYSTRING}"
+    }
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return jsonify(response.json())
+        return jsonify({"error": "Etsy failed to fetch properties", "details": response.text}), response.status_code
+    except Exception as e:
+        return jsonify({"error": "Network execution error", "details": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
