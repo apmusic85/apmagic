@@ -5,7 +5,8 @@ import base64
 import json
 from urllib.parse import urlencode
 import requests
-from flask import Flask, redirect, request, session
+from flask import Flask, redirect, request, session, jsonify
+from taxonomy_id_list_me import ETSY_TAXONOMY_TREE
 
 app = Flask(__name__)
 
@@ -704,5 +705,30 @@ def debug():
     return f"<pre>{json.dumps(r.json(), indent=2)}</pre>"
 
 
+# --- ETSY TAXONOMY MANAGEMENT ROUTES ---
+
+def find_node_by_id(nodes, target_id):
+    for node in nodes:
+        if node.get("id") == target_id:
+            return node
+        children = node.get("children", [])
+        if children:
+            found = find_node_by_id(children, target_id)
+            if found:
+                return found
+    return None
+
+@app.route('/api/categories', methods=['GET'])
+def get_all_categories():
+    return jsonify(ETSY_TAXONOMY_TREE)
+
+@app.route('/api/categories/<int:category_id>', methods=['GET'])
+def get_category_by_id(category_id):
+    node = find_node_by_id(ETSY_TAXONOMY_TREE, category_id)
+    if node:
+        return jsonify(node)
+    return jsonify({"error": f"Taxonomy ID {category_id} not found"}), 404
+
 if __name__ == "__main__":
     app.run(debug=True)
+
