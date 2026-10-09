@@ -515,37 +515,37 @@ function queryEtsyMasterList() {
     h.append('<th>#</th>')
     h.append('<th>shop_section_id</th>')
     for col in active_cols:
-        h.append(f'<th>{col}<a class="col-x" href="{remove_col_url(col)}" title="Remove">&times;</a></th>')
+    h.append(f'<th>{col}<a class="col-x" href="{remove_col_url(col)}" title="Remove">&times;</a></th>')
     h.append('</tr></thead><tbody>')
 
     for idx, (listing, _, _grp) in enumerate(filtered, 1):
-        h.append('<tr>')
-        h.append(f'<td class="td-num">{idx}</td>')
-        h.append(f'<td class="td-sec">{listing.get("shop_section_id", "")}</td>')
-        for col in active_cols:
-            if col == "sku":
-                skus = listing.get("skus")
-                val = skus[0] if isinstance(skus, list) and skus else ""
-            elif col == "price":
-                raw = listing.get("price", "")
-                if isinstance(raw, dict):
-                    amt = float(raw.get("amount", 0))
-                    div = float(raw.get("divisor", 1) or 1)
-                    val = f"${amt / div:.2f}"
-                else:
-                    val = raw
+    h.append('<tr>')
+    h.append(f'<td class="td-num">{idx}</td>')
+    h.append(f'<td class="td-sec">{listing.get("shop_section_id", "")}</td>')
+    for col in active_cols:
+        if col == "sku":
+            skus = listing.get("skus")
+            val = skus if isinstance(skus, list) and skus else ""
+        elif col == "price":
+            raw = listing.get("price", "")
+            if isinstance(raw, dict):
+                amt = float(raw.get("amount", 0))
+                div = float(raw.get("divisor", 1) or 1)
+                val = f"${amt / div:.2f}"
             else:
-                val = listing.get(col, "")
-                if isinstance(val, (list, dict)):
-                    val = json.dumps(val)
-            display = str(val) if val is not None else ""
-            safe = display.replace('"', '&quot;')
-            h.append(f'<td class="td-normal" title="{safe}">{display}</td>')
-        h.append('</tr>')
+                val = raw
+        else:
+            val = listing.get(col, "")
+        if isinstance(val, (list, dict)):
+            val = json.dumps(val)
+        display = str(val) if val is not None else ""
+        safe = display.replace('"', '&quot;')
+        h.append(f'<td class="td-normal" title="{safe}">{display}</td>')
+    h.append('</tr>')
 
-    h.append('</tbody></table></div>')
-    h.append('</body></html>')
-    return "\n".join(h)
+h.append('</tbody></table></div>')
+h.append('</body></html>')
+return "\n".join(h)
 
 
 @app.route("/bulk_update", methods=["POST"])
