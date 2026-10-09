@@ -448,8 +448,9 @@ def listings():
     for field in selectable_fields:
         h.append(f'<option value="{field}">{field}</option>')
     h.append(f"""    </select>
-    <input type="text" name="insert_value" placeholder="Value to apply to all {len(filtered)} rows in view…"/>
-    <button type="submit" class="btn-black">Submit &amp; Sync</button>
+    <input type="text" name="insert_value" placeholder="Value to apply to rows in view…"/>
+    <button type="submit" name="sync_scope" value="local" class="btn-black">Submit &amp; Sync (Local)</button>
+    <button type="submit" name="sync_scope" value="global" class="btn-black" style="background:#b32424; margin-left:6px;">Submit &amp; Sync (Global)</button>
   </form>
   <button class="btn-outline" id="add-col-btn">+ Add Column</button>
   <span class="count-note">{len(filtered)} listings</span>
@@ -521,6 +522,10 @@ def bulk_update():
     cols          = request.form.get("cols", "")
     edit_target   = request.form.get("edit_target")
     insert_value  = request.form.get("insert_value", "").strip()
+    sync_scope    = request.form.get("sync_scope", "local")
+    
+    if sync_scope == "global":
+        active_group = "All"
 
     cols_suffix = f"&cols={cols}" if cols else ""
     back_url = f"/listings?state={working_state}&group={active_group}{cols_suffix}"
@@ -691,4 +696,3 @@ def debug():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
