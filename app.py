@@ -634,34 +634,36 @@ def bulk_update():
             }
             
             payload = {}
-            if edit_target == "title":              payload["title"]               = val_to_send
-            elif edit_target == "description":      payload["description"]         = val_to_send
-            elif edit_target == "state":            payload["state"]               = val_to_send
-            elif edit_target == "shop_section_id":  payload["shop_section_id"]     = val_to_send
-            elif edit_target == "tags":             payload["tags"]                = val_to_send
-            elif edit_target == "materials":        payload["materials"]           = val_to_send
-            elif edit_target == "style":            payload["style"]               = val_to_send
-            elif edit_target == "shipping_profile_id": payload["shipping_profile_id"] = val_to_send
-            elif edit_target == "return_policy_id": payload["return_policy_id"]   = val_to_send
-            elif edit_target == "processing_min":   payload["processing_min"]      = val_to_send
-            elif edit_target == "processing_max":   payload["processing_max"]      = val_to_send
-            elif edit_target == "taxonomy_id":      payload["taxonomy_id"]         = val_to_send
-            elif edit_target == "who_made":         payload["who_made"]            = val_to_send
-            elif edit_target == "when_made":        payload["when_made"]           = val_to_send
-            elif edit_target == "is_supply":        payload["is_supply"]           = val_to_send
-            elif edit_target == "item_length":      payload["item_length"]         = val_to_send
-            elif edit_target == "item_width":       payload["item_width"]          = val_to_send
-            elif edit_target == "item_height":      payload["item_height"]         = val_to_send
-            elif edit_target == "item_dimensions_unit": payload["item_dimensions_unit"] = val_to_send
-            elif edit_target == "item_weight":      payload["item_weight"]         = val_to_send
-            elif edit_target == "item_weight_unit": payload["item_weight_unit"]    = val_to_send
-            elif edit_target == "is_customizable":  payload["is_customizable"]     = val_to_send
-            elif edit_target == "is_personalizable": payload["is_personalizable"]  = val_to_send
-            elif edit_target == "is_private":       payload["is_private"]          = val_to_send
-            elif edit_target == "non_taxable":      payload["non_taxable"]         = val_to_send
-            elif edit_target == "is_taxable":       payload["is_taxable"]          = val_to_send
-            elif edit_target == "listing_type":     payload["listing_type"]        = val_to_send
-            elif edit_target == "should_auto_renew": payload["should_auto_renew"]  = val_to_send
+            if edit_target == "title":
+                if "<insert title>" in val_to_send:
+                    design_name = [l for l in all_results if l.get("listing_id") == listing_id][0].get("title", "Original Art")
+                    payload["title"] = val_to_send.replace("<insert title>", design_name).strip()
+                else:
+                    payload["title"] = val_to_send
+                    
+            elif edit_target == "description": payload["description"] = val_to_send
+            elif edit_target == "state": payload["state"] = val_to_send
+            elif edit_target == "shop_section_id": payload["shop_section_id"] = int(val_to_send)
+            
+            elif edit_target == "tags": payload["tags"] = ",".join(val_to_send) if isinstance(val_to_send, list) else val_to_send
+            elif edit_target == "materials": payload["materials"] = ",".join(val_to_send) if isinstance(val_to_send, list) else val_to_send
+            elif edit_target == "style": payload["style"] = ",".join(val_to_send) if isinstance(val_to_send, list) else val_to_send
+            
+            elif edit_target == "shipping_profile_id": payload["shipping_profile_id"] = int(val_to_send)
+            elif edit_target == "return_policy_id": payload["return_policy_id"] = int(val_to_send)
+            elif edit_target == "processing_min": payload["processing_min"] = int(val_to_send)
+            elif edit_target == "processing_max": payload["processing_max"] = int(val_to_send)
+            elif edit_target == "taxonomy_id": payload["taxonomy_id"] = int(val_to_send)
+            elif edit_target == "who_made": payload["who_made"] = val_to_send
+            elif edit_target == "when_made": payload["when_made"] = val_to_send
+            
+            elif edit_target == "is_supply": payload["is_supply"] = "true" if val_to_send else "false"
+            elif edit_target == "is_customizable": payload["is_customizable"] = "true" if val_to_send else "false"
+            elif edit_target == "is_personalizable": payload["is_personalizable"] = "true" if val_to_send else "false"
+            elif edit_target == "is_private": payload["is_private"] = "true" if val_to_send else "false"
+            elif edit_target == "non_taxable": payload["non_taxable"] = "true" if val_to_send else "false"
+            elif edit_target == "is_taxable": payload["is_taxable"] = "true" if val_to_send else "false"
+            elif edit_target == "should_auto_renew": payload["should_auto_renew"] = "true" if val_to_send else "false"
 
             if not payload:
                 continue
