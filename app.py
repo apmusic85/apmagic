@@ -765,17 +765,34 @@ def get_category_by_id(category_id):
         return jsonify({"error": "Server execution error", "details": str(e)}), 500
 
 
+# --- ETSY TAXONOMY MANAGEMENT ROUTES ---
+
+@app.route('/api/categories', methods=['GET'])
+def get_all_categories():
+    """
+    Fetches the live full hierarchy taxonomy tree directly from Etsy OpenAPI v3.
+    """
+    url = "https://openapi.etsy.com/v3/application/seller-taxonomy/nodes"
+    headers = {"x-api-key": f"{KEYSTRING}"}
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return jsonify(response.json())
+        return jsonify({"error": "Etsy API failure pulling categories", "details": response.text}), response.status_code
+    except Exception as e:
+        return jsonify({"error": "Server connection failed", "details": str(e)}), 500
+
+
 @app.route('/api/categories/<int:category_id>/properties', methods=['GET'])
 def get_category_properties(category_id):
     """
-    Hits the official live v3 endpoint to grab required listing attributes, 
-    variation matrices, and valid size/scale configs for this specific node ID.
+    Retrieves the authentic, live variation requirements from Etsy for this category.
     """
     access_token = session.get("access_token")
     if not access_token:
         return jsonify({"error": "Authentication required. Please log in first."}), 401
 
-    url = f"https://etsy.com/{category_id}/properties"
+    url = f"https://openapi.etsy.com/v3/application/seller-taxonomy/nodes/{category_id}/properties"
     headers = {
         "Authorization": f"Bearer {access_token}",
         "x-api-key": f"{KEYSTRING}"
@@ -784,11 +801,12 @@ def get_category_properties(category_id):
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             return jsonify(response.json())
-        return jsonify({"error": "Etsy failed to fetch properties", "details": response.text}), response.status_code
+        return jsonify({"error": "Etsy rejected variation request", "details": response.text}), response.status_code
     except Exception as e:
-        return jsonify({"error": "Network execution error", "details": str(e)}), 500
+        return jsonify({"error": "Network connection loss", "details": str(e)}), 500
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
