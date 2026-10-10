@@ -455,9 +455,8 @@ def listings():
     <button type="submit" name="sync_scope" value="local" class="btn-black">Submit &amp; Sync (Local)</button>
     <button type="submit" name="sync_scope" value="global" class="btn-black" style="background:#b32424; margin-left:6px;">Submit &amp; Sync (Global)</button>
   </form>
-<a class="btn-outlinerking_state}&group={active_group}&cols={cols_str}
-   Export CSV
-</a>
+<a class="btn-outline"
+   href="/export.csv?state={working_state}&group={active_group}/a>
 
 <button class="btn-outline" id="add-col-btn">+ Add Column</button>
 
