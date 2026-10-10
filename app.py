@@ -406,6 +406,7 @@ def listings():
             if c and c in ORDERED_COLUMNS and c != "shop_section_id" and c != "listing_id" and c not in active_cols:
                 active_cols.append(c)
     cols_str = ",".join(active_cols)
+    cols_suffix = f"&cols={cols_str}" if cols_str else ""
 
     # Fetch and filter
     all_results = fetch_all_listings(access_token, working_state)
