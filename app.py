@@ -455,10 +455,13 @@ def listings():
     <button type="submit" name="sync_scope" value="local" class="btn-black">Submit &amp; Sync (Local)</button>
     <button type="submit" name="sync_scope" value="global" class="btn-black" style="background:#b32424; margin-left:6px;">Submit &amp; Sync (Global)</button>
   </form>
-  <button class="btn-outline" id="add-col-btn">+ Add Column</button>
-  <span class="count-note">{len(filtered)} listings</span>
-</div>
+<a class="btn-outlinerking_state}&group={active_group}&cols={cols_str}
+   Export CSV
+</a>
 
+<button class="btn-outline" id="add-col-btn">+ Add Column</button>
+
+<span class="count-note">{len(filtered)} listings</span>
 <script>
 (function() {{
   var colsStr = "{cols_str}";
