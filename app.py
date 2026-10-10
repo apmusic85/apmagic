@@ -474,11 +474,13 @@ def listings():
 
     h.append("""
 <!-- Live Master Taxonomy Lookup Engine -->
-<div style="margin: 0 20px 15px 20px; padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 6px; display: flex; gap: 10px; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">
-    <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: #888; white-space: nowrap;">Etsy Master Lookup:</span>
-    <input type="text" id="master-search-box" placeholder="Type category name (e.g. Tees, Prints, Hats)..." style="padding: 6px 10px; width: 280px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; color: #000;">
-    <button type="button" onclick="queryEtsyMasterList()" style="padding: 6px 14px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; white-space: nowrap;">Find True IDs</button>
-    <div id="master-search-results" style="font-size: 12px; color: #333; font-weight: 500; margin-left: 10px;"></div>
+<div style="margin: 0 20px 15px 20px; padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: #888; white-space: nowrap;">Etsy Master Lookup:</span>
+        <input type="text" id="master-search-box" placeholder="Type category name (e.g. Tees, Prints, Hats)..." style="padding: 6px 10px; width: 280px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; color: #000;">
+        <button type="button" onclick="queryEtsyMasterList()" style="padding: 6px 14px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; white-space: nowrap;">Find True IDs</button>
+    </div>
+    <div id="master-search-results" style="font-size: 12px; color: #333; font-weight: 500; margin-top: 8px;"></div>
 </div>
 
 <script>
@@ -493,16 +495,31 @@ function queryEtsyMasterList() {
         .then(function(res) { return res.json(); })
         .then(function(payload) {
             var found = [];
-            function traverse(nodes) {
+            function traverse(nodes, path) {
                 nodes.forEach(function(n) {
+                    var here = path.concat([n.name]);
                     if (n.name && n.name.toLowerCase().includes(term)) {
-                        found.push("<strong>" + n.name + "</strong>: <span style='color:#b32424; font-family:monospace; font-weight:bold;'> " + n.id + "</span>");
+                        var isLeaf = !n.children || n.children.length === 0;
+                        found.push({ id: n.id, depth: here.length, leaf: isLeaf, path: here.join(" &gt; ") });
                     }
-                    if (n.children) traverse(n.children);
+                    if (n.children) traverse(n.children, here);
                 });
             }
-            traverse(payload.results || []);
-            resultsBox.innerHTML = found.length > 0 ? found.slice(0, 4).join(" | ") : "No matching categories found.";
+            traverse(payload.results || [], []);
+            // Show the deepest (most specific / leaf) matches first — that's the node Etsy
+            // actually wants you to pick, since same-named categories can exist at several depths.
+            found.sort(function(a, b) { return b.depth - a.depth; });
+            if (found.length === 0) {
+                resultsBox.innerHTML = "No matching categories found.";
+            } else {
+                resultsBox.innerHTML = found.map(function(f) {
+                    var tag = f.leaf
+                        ? "<span style='color:#0a7a2f; font-weight:bold;'>LEAF</span>"
+                        : "<span style='color:#999;'>parent</span>";
+                    return "<div style='padding:3px 0;'>" + tag + " &nbsp; " + f.path +
+                           " &nbsp; <span style='color:#b32424; font-family:monospace; font-weight:bold;'>" + f.id + "</span></div>";
+                }).join("");
+            }
         })
         .catch(function() { resultsBox.innerHTML = "Lookup handshake failed."; });
 }
@@ -785,4 +802,4 @@ def get_category_properties(category_id):
 if __name__ == "__main__":
     app.run(debug=True)
 
-    
+
