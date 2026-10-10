@@ -637,7 +637,7 @@ def bulk_update():
 
         if is_inventory_target:
             # --- INVENTORY PATHWAY: PUT REQUEST ---
-            url = f"https://etsy.com{listing_id}/inventory"
+            url = f"https://api.etsy.com/v3/application/listings/{listing_id}/inventory"
             headers = {
                 "Authorization": f"Bearer {access_token}",
                 "x-api-key": f"{KEYSTRING}:{SHARED_SECRET}",
@@ -658,8 +658,12 @@ def bulk_update():
 
             # Safely loop through all 18 variations (sizes and colors)
             for product in products_list:
-                # Force SKU property context to null to satisfy validation constraints
-                product["sku"] = None
+                if edit_target == "sku":
+                    # Apply the new SKU value to this variation
+                    product["sku"] = str(val_to_send)
+                else:
+                    # Leave existing SKU untouched when editing price/quantity
+                    product["sku"] = product.get("sku")
                 
                 offerings = product.get("offerings", [])
                 for offering in offerings:
