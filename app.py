@@ -5,6 +5,9 @@ import base64
 import json
 from urllib.parse import urlencode
 import requests
+import csv
+import io
+from flask import Response
 from flask import Flask, redirect, request, session, jsonify
 
 app = Flask(__name__)
@@ -797,6 +800,67 @@ def get_category_properties(category_id):
         return jsonify({"error": "Etsy rejected variation request", "details": response.text}), response.status_code
     except Exception as e:
         return jsonify({"error": "Network connection loss", "details": str(e)}), 500
+
+@app.route("/export.csv")
+def export_csv():
+
+    access_token = session.get("access_token")
+
+    if not access_token:
+        return "Authentication access expired. Please re-login.", 401
+
+    working_state = request.args.get("state", "draft")
+    active_group = request.args.get("group", "All")
+
+    cols_param = request.args.get("cols", "")
+    active_cols = [c.strip() for c in cols_param.split(",") if c.strip()]
+
+    if not active_cols:
+        active_cols = [
+            c for c in ORDERED_COLUMNS
+            if c not in ("listing_id", "shop_section_id")
+        ]
+
+    all_results = fetch_all_listings(access_token, working_state)
+
+    rows = [
+        l for l in all_results
+        if active_group == "All" or assign_group(l) == active_group
+    ]
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow(
+        ["listing_id", "shop_section_id"] + active_cols
+    )
+
+    for l in rows:
+
+        row = [
+            l.get("listing_id", ""),
+            l.get("shop_section_id", "")
+        ]
+
+        for col in active_cols:
+
+            val = l.get(col, "")
+
+            if isinstance(val, (list, dict)):
+                val = json.dumps(val)
+
+            row.append(val)
+
+        writer.writerow(row)
+
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={
+            "Content-Disposition":
+            f"attachment; filename=listings_{working_state}_{active_group}.csv"
+        }
+    )
 
 
 if __name__ == "__main__":
