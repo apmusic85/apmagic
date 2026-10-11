@@ -482,6 +482,7 @@ def listings():
         <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: #888; white-space: nowrap;">Etsy Master Lookup:</span>
         <input type="text" id="master-search-box" placeholder="Type category name (e.g. Tees, Prints, Hats)..." style="padding: 6px 10px; width: 280px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; color: #000;">
         <button type="button" onclick="queryEtsyMasterList()" style="padding: 6px 14px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; white-space: nowrap;">Find True IDs</button>
+        <button type="button" onclick="window.location='/export.csv?state=draft&group=All'" style="padding: 6px 14px; background: #1f6feb; color: #fff; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; white-space: nowrap;">Export Draft CSV</button>
     </div>
     <div id="master-search-results" style="font-size: 12px; color: #333; font-weight: 500; margin-top: 8px;"></div>
 </div>
