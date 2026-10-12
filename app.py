@@ -475,6 +475,54 @@ def listings():
 </script>
 """)
 
+h.append(f"""
+<div style="
+    margin:20px;
+    padding:15px;
+    background:#fff;
+    border:1px solid #ddd;
+    border-radius:6px;
+">
+
+    <div class="action-label" style="margin-bottom:10px;">
+        Description Editor
+    </div>
+
+<form method="POST" action="/push_description">
+
+        <input type="hidden" name="state" value="{working_state}">
+        <input type="hidden" name="group" value="{active_group}">
+        <input type="hidden" name="cols" value="{cols_str}">
+
+        <textarea
+            name="description_text"
+            rows="20"
+            placeholder="Paste Etsy description here..."
+            style="
+                width:100%;
+                min-height:400px;
+                padding:12px;
+                border:1px solid #ccc;
+                border-radius:4px;
+                resize:vertical;
+                font-size:13px;
+                font-family:inherit;
+            "
+        ></textarea>
+
+        <button
+            type="submit"
+            class="btn-black"
+            style="margin-top:10px;"
+        >
+            Push Description
+        </button>
+
+    </form>
+
+</div>
+""")
+
     h.append("""
 <!-- Live Master Taxonomy Lookup Engine -->
 <div style="margin: 0 20px 15px 20px; padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">
@@ -748,6 +796,71 @@ def bulk_update():
             f"<p>Success: {success_count} &nbsp;|&nbsp; Failed: {len(failure_logs)}</p>"
             f"<pre>{json.dumps(failure_logs, indent=2)}</pre>"
             f"<p><a href='{back_url}'>Back</a></p>"
+        )
+
+    return redirect(back_url)
+
+@app.route("/push_description", methods=["POST"])
+def push_description():
+
+    access_token = session.get("access_token")
+    if not access_token:
+        return "Authentication access expired. Please re-login.", 401
+
+    working_state = request.form.get("state", "draft")
+    active_group = request.form.get("group", "All")
+    cols = request.form.get("cols", "")
+
+    description = request.form.get("description_text", "").strip()
+
+    all_results = fetch_all_listings(access_token, working_state)
+
+    targets = []
+
+    for l in all_results:
+        if active_group == "All" or assign_group(l) == active_group:
+            listing_id = l.get("listing_id")
+            if listing_id:
+                targets.append(listing_id)
+
+    success_count = 0
+    failure_logs = []
+
+    for listing_id in targets:
+
+        url = f"https://api.etsy.com/v3/application/shops/{SHOP_ID}/listings/{listing_id}"
+
+        payload = {
+            "description": description
+        }
+
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "x-api-key": f"{KEYSTRING}:{SHARED_SECRET}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+
+        res = requests.patch(url, data=payload, headers=headers)
+
+        if res.status_code == 200:
+            success_count += 1
+        else:
+            failure_logs.append(
+                f"ID {listing_id}: {res.status_code} - {res.text}"
+            )
+
+    back_url = (
+        f"/listings?state={working_state}"
+        f"&group={active_group}"
+        f"&cols={cols}"
+    )
+
+    if failure_logs:
+        return (
+            f"<h3>Description Update Log</h3>"
+            f"<p>Success: {success_count} | Failed: {len(failure_logs)}</p>"
+            f"<pre>{json.dumps(failure_logs, indent=2)}</pre>"
+        f"<p><a href='{back_url}'>Back</a></p>"
         )
 
     return redirect(back_url)
