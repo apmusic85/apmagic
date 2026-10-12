@@ -779,6 +779,32 @@ def bulk_update():
             elif edit_target == "is_taxable": payload["is_taxable"] = "true" if val_to_send else "false"
             elif edit_target == "should_auto_renew": payload["should_auto_renew"] = "true" if val_to_send else "false"
 
+if edit_target in ["who_made", "when_made", "is_supply"]:
+
+    current_listing = listing_lookup.get(listing_id, {})
+
+    payload["who_made"] = (
+        val_to_send
+        if edit_target == "who_made"
+        else current_listing.get("who_made")
+    )
+
+    payload["when_made"] = (
+        val_to_send
+        if edit_target == "when_made"
+        else current_listing.get("when_made")
+    )
+
+    is_supply_value = (
+        val_to_send
+        if edit_target == "is_supply"
+        else current_listing.get("is_supply")
+    )
+
+    payload["is_supply"] = (
+        "true" if is_supply_value else "false"
+    )
+    
             if not payload:
                 continue
 
