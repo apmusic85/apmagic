@@ -523,7 +523,7 @@ h.append(f"""
 </div>
 """)
 
-h.append("""
+    h.append("""
 <!-- Live Master Taxonomy Lookup Engine -->
 <div style="margin: 0 20px 15px 20px; padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">
     <div style="display: flex; gap: 10px; align-items: center;">
