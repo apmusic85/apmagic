@@ -475,7 +475,7 @@ def listings():
 </script>
 """)
 
-h.append(f"""
+    h.append(f"""
 <div style="
     margin:20px;
     padding:15px;
@@ -524,7 +524,7 @@ h.append(f"""
 """)
 
     h.append("""
-    <!-- Live Master Taxonomy Lookup Engine -->
+<!-- Live Master Taxonomy Lookup Engine -->
 <div style="margin: 0 20px 15px 20px; padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">
     <div style="display: flex; gap: 10px; align-items: center;">
         <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: #888; white-space: nowrap;">Etsy Master Lookup:</span>
