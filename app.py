@@ -780,7 +780,7 @@ def bulk_update():
             elif edit_target == "should_auto_renew": payload["should_auto_renew"] = "true" if val_to_send else "false"
 
             # Etsy requires who_made, when_made and is_supply together
-            if edit_target in ["who_made", "when_made", "is_supply"\]:
+            if edit_target in ["who_made", "when_made", "is_supply"]:
 
                 current_listing = listing_lookup.get(listing_id, {})
 
